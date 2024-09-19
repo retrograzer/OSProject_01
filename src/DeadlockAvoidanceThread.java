@@ -5,45 +5,82 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class DeadlockAvoidanceThread implements Runnable {
     private final String content;
-    private ReentrantLock lock1 = new ReentrantLock();
-    private ReentrantLock lock2 = new ReentrantLock();
+    private final ReentrantLock lock1 = new ReentrantLock();
+    private final ReentrantLock lock2 = new ReentrantLock();
+    private static boolean file1Locked = false;
+    private static boolean file2Locked = false;
+    String file_path1;
+    String file_path2;
 
-    public DeadlockAvoidanceThread (String content, ReentrantLock lock1, ReentrantLock lock2) {
+    public DeadlockAvoidanceThread (String content, String file1, String file2) {
         this.content = content;
-        this.lock1 = lock1;
-        this.lock2 = lock2;
+        file_path1 = file1;
+        file_path2 = file2;
     }
 
     public void run() {
-        String FILE_PATH1 = Main.file_path;
-        String FILE_PATH2 = Main.file_path2;
 
-        System.out.println("Deadlock Start");
+        System.out.println("Deadlock Avoidance " + Thread.currentThread().getName() + " Start");
 
-        lock1.lock();
-        try {
-            WriteToFile(FILE_PATH1, Thread.currentThread().getName() + " Writing To: " + FILE_PATH1 + "\nCONTENT:" + content);
-            System.out.println(Thread.currentThread().getName() + " is Locked to " + FILE_PATH1);
-
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+        //Perform a loop that checks to see if either lock is locked
+        while (true) {
+            if (CanAcquireLocks()) { //If both locks are unlocked, write to file
+                AcquireLocks();
+                break;
+            } else { //If either lock is occupied, wait
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
-
-            System.out.println(Thread.currentThread().getName() + " is waiting for " + FILE_PATH2);
-            lock2.lock();
-            try {
-                WriteToFile(FILE_PATH2, Thread.currentThread().getName() + " Writing To: " + FILE_PATH2 + "\nCONTENT:" + content);
-                System.out.println(Thread.currentThread().getName() + " is Locked to " + FILE_PATH2);
-            } finally {
-                lock2.unlock();
-            }
-        } finally {
-            lock1.unlock();
         }
 
-        System.out.println("Writer End");
+        WriteToFile(file_path1, "Writing " + content + " to " + file_path1);
+        WriteToFile(file_path2, "Writing " + content + " to " + file_path2);
+
+        System.out.println("Writer End, unlocking threads...");
+
+        UnlockLocks();
+    }
+
+    //Are either locks occupied?
+    private synchronized boolean CanAcquireLocks() {
+        return !file1Locked && !file2Locked;
+    }
+
+    //Make sure the locks are in the correct order, despite what the user gave
+    private synchronized void AcquireLocks () {
+        if (file_path1.equals(Main.file_path)) {
+            lock1.lock();
+            file1Locked = true;
+
+            lock2.lock();
+            file2Locked = true;
+        } else {
+            lock2.lock();
+            file2Locked = true;
+
+            lock1.lock();
+            file1Locked = true;
+        }
+    }
+
+    //Unlock all the locks in the correct order
+    private synchronized void UnlockLocks () {
+        if (file_path1.equals(Main.file_path)) {
+            lock2.unlock();
+            file2Locked = false;
+
+            lock1.unlock();
+            file1Locked = false;
+        } else {
+            lock1.unlock();
+            file1Locked = false;
+
+            lock2.unlock();
+            file2Locked = false;
+        }
     }
 
     private void WriteToFile (String path, String content) {

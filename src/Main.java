@@ -1,6 +1,4 @@
-import javax.management.timer.Timer;
 import java.io.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Main {
@@ -21,6 +19,7 @@ public class Main {
         }
     }
 
+    //Threads
     static void Part01 () {
         ClearFile();
         //Set up two readers and two writers
@@ -68,6 +67,7 @@ public class Main {
         }
     }
 
+    //No Mutex
     static void Part02A () {
         ClearFile();
         //Set up two readers and two writers (both of them without mutex for now)
@@ -100,6 +100,7 @@ public class Main {
 
     }
 
+    //With Mutex
     static void Part02B () {
         ClearFile();
         //Set up two readers and two writers (both of them with mutex)
@@ -129,6 +130,7 @@ public class Main {
         }
     }
 
+    //Deadlock
     static void Part03 () {
         ClearFile();
         ReentrantLock lock1 = new ReentrantLock();
@@ -152,18 +154,41 @@ public class Main {
         }
     }
 
+    //Deadlock Avoidance
+    static void Part04() {
+        ClearFile();
+        ReentrantLock lock1 = new ReentrantLock();
+        ReentrantLock lock2 = new ReentrantLock();
+
+        DeadlockAvoidanceThread dlThread1 = new DeadlockAvoidanceThread("Hello!", file_path, file_path2);
+        DeadlockAvoidanceThread dlThread2 = new DeadlockAvoidanceThread("Goodbye!", file_path2, file_path);
+
+        //Make objects into threads
+        Thread wThread1 = new Thread(dlThread1);
+        Thread wThread2 = new Thread(dlThread2);
+
+        wThread1.start();
+        wThread2.start();
+
+        try {
+            wThread1.join();
+            wThread2.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void main(String[] args) {
 
-        //System.out.println("~~~~~~~~~~~~~~~~~~~~~\nPart 1\n~~~~~~~~~~~~~~~~~~~~~");
         //Part01();
 
-        //System.out.println("~~~~~~~~~~~~~~~~~~~~~\nPart 2 (No Lock)\n~~~~~~~~~~~~~~~~~~~~~");
         //Part02A();
 
-        //System.out.println("~~~~~~~~~~~~~~~~~~~~~\nPart 2 (Lock)\n~~~~~~~~~~~~~~~~~~~~~");
         //Part02B();
 
-        Part03();
+        //Part03();
+
+        Part04();
 
         System.out.println("Main Thread ended");
     }
