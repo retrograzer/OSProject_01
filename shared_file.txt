@@ -1,0 +1,4 @@
+Thread-1 Writing To: shared_file.txt
+CONTENT:Goodbye!
+Thread-0 Writing To: shared_file.txt
+CONTENT:Hello!
