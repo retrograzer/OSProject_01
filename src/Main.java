@@ -5,15 +5,17 @@ public class Main {
     public static final String file_path = "shared_file.txt";
     public static final String file_path2 = "shared_file_2.txt";
 
+    //Clears the files to have a clean slate
     static void ClearFile () {
+        //Set the append param to false to clear the files
         try (FileWriter writer = new FileWriter(file_path, false)) {
-            System.out.println("File Cleared of Previous Contents...");
+            System.out.println("File 1 Cleared of Previous Contents...");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         try (FileWriter writer = new FileWriter(file_path2, false)) {
-            System.out.println("File Cleared of Previous Contents...");
+            System.out.println("File 2 Cleared of Previous Contents...");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -82,6 +84,7 @@ public class Main {
         Thread rThread1 = new Thread(rUnsync1);
         Thread rThread2 = new Thread(rUnsync2);
 
+        //Start all the threads at the same time with no locks
         try {
             wThread1.start();
             //wThread1.join();
@@ -120,6 +123,7 @@ public class Main {
         wThread2.start();
         rThread2.start();
 
+        //Join all the threads together in order, locks will secure the rest
         try {
             wThread1.join();
             rThread1.join();
@@ -133,9 +137,11 @@ public class Main {
     //Deadlock
     static void Part03 () {
         ClearFile();
+        //Set the 2 locks here so that we can intentionally crisscross them
         ReentrantLock lock1 = new ReentrantLock();
         ReentrantLock lock2 = new ReentrantLock();
 
+        //Create the crisscrossed threads with locks
         DeadLockThread dlThread1 = new DeadLockThread("Hello!", lock1, lock2);
         DeadLockThread dlThread2 = new DeadLockThread("Goodbye!", lock2, lock1);
 
@@ -157,9 +163,8 @@ public class Main {
     //Deadlock Avoidance
     static void Part04() {
         ClearFile();
-        ReentrantLock lock1 = new ReentrantLock();
-        ReentrantLock lock2 = new ReentrantLock();
 
+        //This time we pass file paths to crossreference later
         DeadlockAvoidanceThread dlThread1 = new DeadlockAvoidanceThread("Hello!", file_path, file_path2);
         DeadlockAvoidanceThread dlThread2 = new DeadlockAvoidanceThread("Goodbye!", file_path2, file_path);
 
@@ -179,6 +184,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        //Uncomment whichever part you would like to test
 
         //Part01();
 
@@ -190,6 +196,7 @@ public class Main {
 
         Part04();
 
+        //For debugging purposes, so I can see when the main thread ends, if ever
         System.out.println("Main Thread ended");
     }
 }

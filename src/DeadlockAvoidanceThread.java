@@ -51,13 +51,13 @@ public class DeadlockAvoidanceThread implements Runnable {
 
     //Make sure the locks are in the correct order, despite what the user gave
     private synchronized void AcquireLocks () {
-        if (file_path1.equals(Main.file_path)) {
-            lock1.lock();
-            file1Locked = true;
+        if (file_path1.equals(Main.file_path)) { //Are the paths matching the ones in main?
+            lock1.lock(); //Lock it down
+            file1Locked = true; //Let CanAcquireLocks know it's locked
 
             lock2.lock();
             file2Locked = true;
-        } else {
+        } else { //Or are they crisscrossed?
             lock2.lock();
             file2Locked = true;
 
@@ -68,7 +68,8 @@ public class DeadlockAvoidanceThread implements Runnable {
 
     //Unlock all the locks in the correct order
     private synchronized void UnlockLocks () {
-        if (file_path1.equals(Main.file_path)) {
+        if (file_path1.equals(Main.file_path)) { //Are the paths matching?
+            //This is the reverse order from AcquireLocks
             lock2.unlock();
             file2Locked = false;
 
@@ -83,7 +84,9 @@ public class DeadlockAvoidanceThread implements Runnable {
         }
     }
 
+    //Write to file
     private void WriteToFile (String path, String content) {
+        //Write "content" to file path "path"
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(path, true))) {
             writer.write(content);
             writer.newLine();
